@@ -1,0 +1,19 @@
+{
+    "KPlugin": {
+        "Id": "io.github.jo-tud.hue-dashboard",
+        "Name": "Hue Dashboard",
+        "Description": "Control your Philips Hue lights from the system tray",
+        "Icon": "user-home",
+        "Authors": [
+            {
+                "Name": "",
+                "Email": ""
+            }
+        ],
+        "Category": "Utilities",
+        "Version": "1.0",
+        "License": "MIT"
+    },
+    "KPackageStructure": "Plasma/Applet",
+    "X-Plasma-API-Minimum-Version": "6.0"
+}

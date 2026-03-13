@@ -1,0 +1,8 @@
+{
+    "name": "Hue Dashboard",
+    "description": "Control your Philips Hue lights from the panel",
+    "uuid": "hue-dashboard@jo-tud",
+    "shell-version": ["45", "46", "47", "48", "49"],
+    "version": 1,
+    "url": ""
+}
