@@ -131,13 +131,15 @@ nav button.active::before{
 .light-card-controls{display:flex;flex-direction:column;gap:14px;padding:14px 0 0 24px}
 
 /* ═══ TOGGLE ═══ */
-.toggle{position:relative;width:62px;height:34px;flex-shrink:0;cursor:pointer}
+.toggle{position:relative;display:inline-block;vertical-align:middle;width:62px;height:34px;flex-shrink:0;cursor:pointer}
 .toggle input{display:none}
 .toggle-track{position:absolute;top:0;right:0;bottom:0;left:0;border-radius:4px;border:2px solid var(--border-glow);background:var(--bg-surface);transition:all .25s}
 .toggle-thumb{position:absolute;top:4px;left:4px;width:26px;height:26px;border-radius:3px;background:var(--text-muted);transition:all .25s}
 .toggle input:checked~.toggle-track{border-color:var(--accent);background:rgba(232,90,48,.1);box-shadow:var(--glow-accent)}
 .toggle input:checked~.toggle-thumb{left:32px;background:var(--accent);box-shadow:0 0 6px rgba(232,90,48,.6)}
 .toggle-room{width:72px;height:38px}
+.light-card.unreachable{opacity:.45}
+.light-card.unreachable .toggle{pointer-events:none}
 .toggle-room .toggle-track{border-radius:5px}
 .toggle-room .toggle-thumb{top:4px;left:5px;width:30px;height:30px;border-radius:4px}
 .toggle-room input:checked~.toggle-thumb{left:37px}
@@ -194,7 +196,8 @@ input[type=range].ct-slider::-moz-range-thumb{background:var(--neon-orange);box-
 .forecast-day-hi{font-family:var(--font-display);font-size:16px;font-weight:700;color:var(--text-primary)}
 .forecast-day-lo{font-family:var(--font-mono);font-size:12px;color:var(--text-muted);margin-top:2px}
 .forecast-day-icon{font-size:14px;color:var(--text-secondary);margin-bottom:4px}
-.news-item{padding:12px 0;border-bottom:1px solid var(--border)}
+.news-item{display:block;padding:12px 0;border-bottom:1px solid var(--border);text-decoration:none;color:inherit}
+.news-item:active .news-item-title,.news-item:hover .news-item-title{color:var(--accent)}
 .news-item:last-child{border-bottom:none}
 .news-item-title{font-size:15px;font-weight:600;color:var(--text-primary);line-height:1.3;margin-bottom:4px}
 .news-item-time{font-family:var(--font-mono);font-size:11px;color:var(--text-muted)}
@@ -208,6 +211,15 @@ input[type=range].ct-slider::-moz-range-thumb{background:var(--neon-orange);box-
   background:var(--bg-surface);color:var(--text-secondary);font-family:var(--font-ui);
   font-size:12px;cursor:pointer;
 }
+.loc-input{
+  flex:1;min-width:0;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius);
+  background:var(--bg-surface);color:var(--text-primary);font-family:var(--font-ui);font-size:13px;
+}
+.offline-msg{
+  font-family:var(--font-mono);font-size:13px;color:var(--text-muted);text-align:center;
+  padding:40px 20px;line-height:1.6;
+}
+.offline-msg strong{display:block;color:var(--text-secondary);font-size:15px;margin-bottom:6px}
 
 /* ═══ NOTES PANEL ═══ */
 .notes-tabs{display:flex;gap:2px;margin-bottom:14px}
@@ -335,6 +347,7 @@ input[type=range].ct-slider::-moz-range-thumb{background:var(--neon-orange);box-
   text-align:center;margin-bottom:16px;line-height:1.5;
 }
 .setup-message.error{color:var(--neon-pink)}
+.setup-hint{font-family:var(--font-ui);font-size:12px;color:var(--text-muted);text-align:center;margin:-6px 0 16px;line-height:1.5}
 .setup-message.success{color:var(--neon-green)}
 .setup-spinner{
   display:block;width:32px;height:32px;margin:0 auto 20px;
@@ -464,22 +477,17 @@ input[type=range].ct-slider::-moz-range-thumb{background:var(--neon-orange);box-
 
     <!-- Step 1: Discover Bridge -->
     <div class="setup-step active" id="setupStep1">
-      <div id="setupDiscoverMsg" class="setup-message">Searching for Hue Bridge...</div>
-      <div id="setupSpinner" class="setup-spinner"></div>
-      <div id="setupFoundIp" style="display:none">
-        <div class="setup-ip-display" id="setupIpDisplay"></div>
-        <button class="setup-btn" id="setupConfirmIp">NEXT</button>
-        <button class="setup-btn-secondary" id="setupEditIp">ENTER MANUALLY</button>
-      </div>
-      <div id="setupManualIp" style="display:none">
-        <input class="setup-input" type="text" id="setupIpInput" placeholder="192.168.1.x" autocomplete="off">
+      <div id="setupDiscoverMsg" class="setup-message">Enter the IP address of your Hue Bridge.</div>
+      <div class="setup-hint">FRITZ!Box: Heimnetz &rarr; Netzwerk &middot; Hue app: Settings &rarr; My Hue System &rarr; Bridge</div>
+      <div id="setupManualIp">
+        <input class="setup-input" type="text" id="setupIpInput" placeholder="192.168.178.x" autocomplete="off" inputmode="decimal">
         <button class="setup-btn" id="setupManualNext">NEXT</button>
       </div>
     </div>
 
     <!-- Step 2: Create API Key -->
     <div class="setup-step" id="setupStep2">
-      <div id="setupPairMsg" class="setup-message">Press the button on your Hue Bridge,<br>then tap Connect below.</div>
+      <div id="setupPairMsg" class="setup-message">Tap Connect, then press the round button<br>on the Hue Bridge within 60 seconds.</div>
       <button class="setup-btn" id="setupConnectBtn">CONNECT</button>
       <button class="setup-btn-secondary" id="setupBackBtn">BACK</button>
     </div>
@@ -499,10 +507,9 @@ var CONFIG = {
   bridgeIp: stored_ip || '',
   username: stored_key || '',
   pollInterval: 2000,
+  offlinePollInterval: 15000,
   weatherInterval: 30 * 60 * 1000,
   newsInterval: 15 * 60 * 1000,
-  defaultLat: 0,
-  defaultLon: 0,
 };
 var API = CONFIG.bridgeIp && CONFIG.username
   ? 'http://' + CONFIG.bridgeIp + '/api/' + CONFIG.username
@@ -517,45 +524,34 @@ function hasCredentials() {
 
 function showSetup() {
   document.getElementById('setupOverlay').style.display = 'flex';
-  discoverBridge();
+  document.getElementById('setupIpInput').value = localStorage.getItem('hue_last_bridge_ip') || '';
+  document.getElementById('setupIpInput').focus();
 }
 
-function discoverBridge() {
+/* discovery.meethue.com only allows its own origin (CORS), so a browser page
+   cannot use it. Instead check that a Hue bridge answers at the entered IP. */
+function setupCheckIp(ip) {
   var msgEl = document.getElementById('setupDiscoverMsg');
-  var spinnerEl = document.getElementById('setupSpinner');
-  var foundEl = document.getElementById('setupFoundIp');
-  var manualEl = document.getElementById('setupManualIp');
+  var btn = document.getElementById('setupManualNext');
+  btn.disabled = true;
   msgEl.className = 'setup-message';
-  msgEl.textContent = 'Searching for Hue Bridge...';
-  msgEl.style.display = '';
-  spinnerEl.style.display = '';
-  foundEl.style.display = 'none';
-  manualEl.style.display = 'none';
-
-  fetch('https://discovery.meethue.com')
+  msgEl.textContent = 'Checking ' + ip + '...';
+  timedFetch('http://' + ip + '/api/config', {}, 5000)
     .then(function(r) { return r.json(); })
-    .then(function(data) {
-      if (data && data.length > 0 && data[0].internalipaddress) {
-        _setupBridgeIp = data[0].internalipaddress;
-        spinnerEl.style.display = 'none';
-        msgEl.textContent = 'Bridge found!';
-        msgEl.className = 'setup-message success';
-        document.getElementById('setupIpDisplay').textContent = _setupBridgeIp;
-        foundEl.style.display = '';
-      } else {
-        showManualIpEntry(msgEl, spinnerEl, manualEl);
-      }
+    .then(function(cfg) {
+      btn.disabled = false;
+      if (!cfg || !cfg.bridgeid) throw new Error('not a bridge');
+      _setupBridgeIp = ip;
+      localStorage.setItem('hue_last_bridge_ip', ip);
+      msgEl.className = 'setup-message success';
+      msgEl.textContent = (cfg.name || 'Hue Bridge') + ' found at ' + ip;
+      goToStep(2);
     })
     .catch(function() {
-      showManualIpEntry(msgEl, spinnerEl, manualEl);
+      btn.disabled = false;
+      msgEl.className = 'setup-message error';
+      msgEl.textContent = 'No Hue Bridge answers at ' + ip + '. Check the address and that you are in the home network.';
     });
-}
-
-function showManualIpEntry(msgEl, spinnerEl, manualEl) {
-  spinnerEl.style.display = 'none';
-  msgEl.textContent = 'Could not auto-discover bridge.';
-  msgEl.className = 'setup-message error';
-  manualEl.style.display = '';
 }
 
 function goToStep(num) {
@@ -566,65 +562,80 @@ function goToStep(num) {
   document.getElementById('setupStep' + num).className = 'setup-step active';
 }
 
+/* The bridge only accepts a new key for 30 s after its button was pressed.
+   Keep asking every 2 s for a minute, so the order of tap and button press does not matter. */
+var _pairTimer = null;
+var _pairRun = 0;        /* bumped by stopPairing, so answers still in flight are ignored */
+
+function stopPairing() {
+  _pairRun++;
+  if (_pairTimer) { clearTimeout(_pairTimer); _pairTimer = null; }
+  document.getElementById('setupConnectBtn').disabled = false;
+}
+
 function setupPair() {
   var msgEl = document.getElementById('setupPairMsg');
   var btn = document.getElementById('setupConnectBtn');
+  var deadline = Date.now() + 60000;
+  var run = ++_pairRun;
   btn.disabled = true;
   msgEl.className = 'setup-message';
-  msgEl.innerHTML = 'Connecting...';
 
-  fetch('http://' + _setupBridgeIp + '/api', {
-    method: 'POST',
-    body: JSON.stringify({ devicetype: 'hue-dashboard#browser' })
-  })
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
-      btn.disabled = false;
-      if (data && data[0]) {
-        if (data[0].error && data[0].error.type === 101) {
-          msgEl.className = 'setup-message error';
-          msgEl.innerHTML = 'Button not pressed yet &mdash; try again.';
-        } else if (data[0].success && data[0].success.username) {
-          var apiKey = data[0].success.username;
+  function attempt() {
+    if (run !== _pairRun) return;
+    var left = Math.max(0, Math.round((deadline - Date.now()) / 1000));
+    msgEl.innerHTML = 'Waiting for the button on the bridge&hellip; ' + left + ' s';
+    timedFetch('http://' + _setupBridgeIp + '/api', {
+      method: 'POST',
+      body: JSON.stringify({ devicetype: 'hue-dashboard#browser' })
+    }, 5000)
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (run !== _pairRun) return;
+        var d = data && data[0];
+        if (d && d.success && d.success.username) {
+          stopPairing();
           localStorage.setItem('hue_bridge_ip', _setupBridgeIp);
-          localStorage.setItem('hue_api_key', apiKey);
+          localStorage.setItem('hue_api_key', d.success.username);
           goToStep(3);
           setTimeout(function() { location.reload(); }, 1200);
-        } else if (data[0].error) {
-          msgEl.className = 'setup-message error';
-          msgEl.textContent = 'Error: ' + data[0].error.description;
+          return;
         }
-      }
-    })
-    .catch(function(e) {
-      btn.disabled = false;
+        if (d && d.error && d.error.type !== 101) {
+          stopPairing();
+          msgEl.className = 'setup-message error';
+          msgEl.textContent = 'Error: ' + d.error.description;
+          return;
+        }
+        retry();
+      })
+      .catch(retry);
+  }
+
+  function retry() {
+    if (run !== _pairRun) return;
+    if (Date.now() >= deadline) {
+      stopPairing();
       msgEl.className = 'setup-message error';
-      msgEl.textContent = 'Connection failed. Check the IP and try again.';
-    });
+      msgEl.textContent = 'No button press detected. Tap Connect to try again.';
+      return;
+    }
+    _pairTimer = setTimeout(attempt, 2000);
+  }
+
+  attempt();
 }
 
 /* Setup event listeners */
 (function() {
-  /* Step 1 — confirm discovered IP */
-  document.getElementById('setupConfirmIp').addEventListener('click', function() {
-    goToStep(2);
-  });
-
-  /* Step 1 — switch to manual entry */
-  document.getElementById('setupEditIp').addEventListener('click', function() {
-    document.getElementById('setupFoundIp').style.display = 'none';
-    document.getElementById('setupDiscoverMsg').style.display = 'none';
-    document.getElementById('setupManualIp').style.display = '';
-    document.getElementById('setupIpInput').value = _setupBridgeIp;
-    document.getElementById('setupIpInput').focus();
-  });
-
-  /* Step 1 — manual IP next */
-  document.getElementById('setupManualNext').addEventListener('click', function() {
+  /* Step 1 — IP entered */
+  function ipNext() {
     var ip = document.getElementById('setupIpInput').value.trim();
-    if (!ip) return;
-    _setupBridgeIp = ip;
-    goToStep(2);
+    if (ip) setupCheckIp(ip);
+  }
+  document.getElementById('setupManualNext').addEventListener('click', ipNext);
+  document.getElementById('setupIpInput').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') ipNext();
   });
 
   /* Step 2 — connect */
@@ -634,8 +645,8 @@ function setupPair() {
 
   /* Step 2 — back */
   document.getElementById('setupBackBtn').addEventListener('click', function() {
+    stopPairing();
     goToStep(1);
-    discoverBridge();
   });
 
   /* Settings gear — reset credentials */
@@ -657,57 +668,121 @@ const state = {
   customSwitches: JSON.parse(localStorage.getItem('nexus_custom') || '[]'),
   weather: null,
   news: [],
-  location: JSON.parse(localStorage.getItem('nexus_location') || 'null'),
+  location: loadLocation(),
+  polledOnce: false,
+  rejected: false,      /* bridge answered but refused the API key */
+  editingLocation: false,
 };
 let interactionActive = false;
 let renderPending = false;
 let pollLocked = false;
 let pollLockTimer = null;
+let localGen = 0;        /* bumped on every local change; older poll results are dropped */
+let fetching = false;
+let lastDataKey = '';
+let pollTimer = null;
 
 const SWATCH_COLORS = ['#e85a30','#ff2d7b','#00ff88','#ffd000','#b44dff','#ff6b2d','#00aaff','#ff4444','#44ffaa','#ffaa00'];
 const WMO = {0:'Clear',1:'Mostly clear',2:'Partly cloudy',3:'Overcast',45:'Fog',48:'Rime fog',51:'Light drizzle',53:'Drizzle',55:'Heavy drizzle',56:'Freezing drizzle',57:'Heavy freezing drizzle',61:'Light rain',63:'Rain',65:'Heavy rain',66:'Freezing rain',67:'Heavy freezing rain',71:'Light snow',73:'Snow',75:'Heavy snow',77:'Snow grains',80:'Light showers',81:'Showers',82:'Heavy showers',85:'Snow showers',86:'Heavy snow showers',95:'Thunderstorm',96:'Thunderstorm w/ hail',99:'Heavy thunderstorm'};
 const DAYS_DE = ['SO','MO','DI','MI','DO','FR','SA'];
 
 /* ═══ HUE API ═══ */
-async function apiFetch(path){return(await fetch(`${API}${path}`)).json()}
-async function apiPut(path,body){return(await fetch(`${API}${path}`,{method:'PUT',body:JSON.stringify(body)})).json()}
+function timedFetch(url, opts, ms) {
+  var ctrl = new AbortController();
+  var t = setTimeout(function() { ctrl.abort(); }, ms || 5000);
+  opts = Object.assign({}, opts, { signal: ctrl.signal });
+  return fetch(url, opts).then(function(r) {
+    clearTimeout(t);
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return r;
+  }, function(e) { clearTimeout(t); throw e; });
+}
+/* The v1 API reports errors as [{error:{type,description}}] with HTTP 200 */
+function bridgeError(data) {
+  return Array.isArray(data) && data[0] && data[0].error ? data[0].error : null;
+}
+async function apiFetch(path){
+  const data=await(await timedFetch(API+path,{},5000)).json();
+  const err=bridgeError(data);
+  if(err){const e=new Error(err.description);e.bridge=err;throw e}
+  return data;
+}
+async function apiPut(path,body){
+  try{
+    const data=await(await timedFetch(API+path,{method:'PUT',body:JSON.stringify(body)},5000)).json();
+    if(bridgeError(data))throw new Error(bridgeError(data).description);
+    return data;
+  }catch(e){
+    /* resync with what the bridge really did */
+    pollLocked=false;clearTimeout(pollLockTimer);fetchState();
+  }
+}
 
 function lockPoll(){
+  localGen++;
   pollLocked=true;
   clearTimeout(pollLockTimer);
   pollLockTimer=setTimeout(function(){pollLocked=false},3000);
 }
 async function fetchState(){
-  if(pollLocked)return;
+  if(pollLocked||fetching)return;
+  fetching=true;
+  var gen=localGen;
   try{
     var r=await Promise.all([apiFetch('/lights'),apiFetch('/groups')]);
-    state.lights=r[0];state.groups=r[1];state.connected=true;
-  }catch(e){state.connected=false}
-  render();
+    if(gen===localGen){state.lights=r[0];state.groups=r[1]}
+    state.connected=true;state.rejected=false;
+  }catch(e){
+    state.connected=false;state.rejected=!!e.bridge;
+  }
+  fetching=false;
+  state.polledOnce=true;
+  /* Only redraw when something changed: rebuilding the DOM every 2 s is heavy on old tablets */
+  var key=(state.connected?'1':'0')+(state.rejected?'1':'0')+JSON.stringify(state.lights)+JSON.stringify(state.groups);
+  if(key!==lastDataKey){lastDataKey=key;render()}
+  else document.getElementById('connStatus').className='conn-status'+(state.connected?'':' error');
+}
+/* Poll fast while the bridge answers, slowly while it does not (e.g. laptop away
+   from home), and not at all while the page is hidden. */
+function schedulePoll(){
+  clearTimeout(pollTimer);
+  if(document.hidden)return;
+  pollTimer=setTimeout(async function(){await fetchState();schedulePoll()},state.connected?CONFIG.pollInterval:CONFIG.offlinePollInterval);
+}
+document.addEventListener('visibilitychange',function(){
+  if(!document.hidden&&hasCredentials()){fetchState().then(schedulePoll)}
+  else clearTimeout(pollTimer);
+});
+function patchLight(id,body){
+  var l=state.lights[id];
+  if(l&&l.state)Object.assign(l.state,body);
 }
 async function setLight(id,body){
-  if(state.lights[id]){Object.assign(state.lights[id].state,body);lockPoll();render()}
+  patchLight(id,body);lockPoll();render();
   await apiPut('/lights/'+id+'/state',body);
 }
 async function setGroup(id,body){
   var g=state.groups[id];
-  if(g&&g.lights){g.lights.forEach(function(lid){var l=state.lights[lid];if(l&&l.state)Object.assign(l.state,body)})}
+  if(g&&g.lights){g.lights.forEach(function(lid){patchLight(lid,body)})}
   lockPoll();render();
   await apiPut('/groups/'+id+'/action',body);
 }
 async function allOff(){
-  Object.values(state.lights).forEach(function(l){if(l.state)l.state.on=false});
+  Object.keys(state.lights).forEach(function(lid){patchLight(lid,{on:false})});
   lockPoll();render();
   await apiPut('/groups/0/action',{on:false});
 }
 
 /* ═══ HELPERS ═══ */
+/* Names come from the bridge, localStorage or the news feed: never insert them as raw HTML */
+function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+function safeColor(c){return /^#[0-9a-f]{6}$/i.test(c||'')?c:SWATCH_COLORS[0]}
 /* Safe access helpers for old Chrome (no optional chaining) */
 function ls(id){var l=state.lights[id];return l&&l.state?l.state:{}}
 function gs(id){var g=state.groups[id];return g&&g.state?g.state:{}}
 function lcaps(l){return l&&l.capabilities&&l.capabilities.control?l.capabilities.control:{}}
 
-function getRooms(){return Object.entries(state.groups).filter(([,g])=>g.type==='Room').sort((a,b)=>a[1].name.localeCompare(b[1].name))}
+function getRooms(){return Object.entries(state.groups).filter(([,g])=>g.type==='Room').sort((a,b)=>String(a[1].name).localeCompare(String(b[1].name)))}
 function roomLightsOn(g){return g.lights.filter(id=>ls(id).on).length}
 function isRoomOn(g){return g.lights.some(id=>ls(id).on)}
 function totalOn(){return Object.values(state.lights).filter(l=>l.state&&l.state.on).length}
@@ -727,9 +802,19 @@ function updateClock(){const n=new Date();document.getElementById('clock').textC
 setInterval(updateClock,10000);updateClock();
 
 /* ═══ RENDER ═══ */
+function offlineHtml(){
+  if(state.rejected)return`<div class="offline-msg"><strong>Bridge refused access</strong>The API key is no longer valid. Use the gear icon to set up again.</div>`;
+  return`<div class="offline-msg"><strong>Bridge not reachable</strong>${esc(CONFIG.bridgeIp)} does not answer &mdash; only works in the home network.<br>Retrying every ${CONFIG.offlinePollInterval/1000} s.</div>`;
+}
 function render(){
   document.getElementById('connStatus').className='conn-status'+(state.connected?'':' error');
   if(interactionActive){renderPending=true;return}
+  if(state.polledOnce&&!state.connected){
+    /* Do not show stale switch states that cannot be changed anyway */
+    var html=offlineHtml();
+    ['panelDashboard','panelRooms','panelCustom'].forEach(function(id){document.getElementById(id).innerHTML=html});
+    return;
+  }
   renderDashboard();renderRooms();renderCustom();
 }
 
@@ -738,16 +823,16 @@ function renderDashboard(){
   document.getElementById('panelDashboard').innerHTML=`
     <div class="status-bar"><span class="status-count">${on}</span><span class="status-label">/&thinsp;${total} ON</span></div>
     ${rooms.map(([gid,g])=>{const rOn=isRoomOn(g);return`<div class="dash-room ${rOn?'on':''}">
-      <div class="dash-room-header"><span class="dash-room-name">${g.name}</span>
+      <div class="dash-room-header"><span class="dash-room-name">${esc(g.name)}</span>
         <div class="dash-room-toggle" data-dash-room-toggle="${gid}">${toggleHtml(rOn,'toggle-room')}</div></div>
-      <div class="dash-room-lights">${g.lights.map(lid=>{const l=state.lights[lid];if(!l)return'';const lOn=l.state&&l.state.on;return`<div class="light-pill ${lOn?'on':''}" data-dash-light="${lid}"><div class="light-pill-dot"></div><span class="light-pill-name">${l.name}</span></div>`}).join('')}</div></div>`}).join('')}
+      <div class="dash-room-lights">${g.lights.map(lid=>{const l=state.lights[lid];if(!l)return'';const lOn=l.state&&l.state.on;return`<div class="light-pill ${lOn?'on':''}" data-dash-light="${lid}"><div class="light-pill-dot"></div><span class="light-pill-name">${esc(l.name)}</span></div>`}).join('')}</div></div>`}).join('')}
     <button class="all-off-btn" id="allOffBtn"><svg viewBox="0 0 24 24"><path d="M18.36 6.64A9 9 0 1 1 5.64 6.64"/><line x1="12" y1="2" x2="12" y2="12"/></svg>ALL OFF</button>`;
 }
 
 function renderRooms(){
   const rooms=getRooms();
   document.getElementById('panelRooms').innerHTML=rooms.map(([gid,g])=>{const rOn=isRoomOn(g),cnt=roomLightsOn(g);return`<div class="room-section ${rOn?'on':''}">
-    <div class="room-section-header"><span class="room-section-name">${g.name}</span><span class="room-section-count">${cnt}/${g.lights.length}</span>
+    <div class="room-section-header"><span class="room-section-name">${esc(g.name)}</span><span class="room-section-count">${cnt}/${g.lights.length}</span>
       <span data-room-toggle="${gid}">${toggleHtml(rOn,'toggle-room')}</span></div>
     <div class="room-section-lights">${g.lights.map(lid=>renderLightCard(lid)).join('')}</div></div>`}).join('');
 }
@@ -757,41 +842,59 @@ function renderLightCard(lid){
   if(on&&(type==='dim'||type==='ct'||type==='color')){const p=briToPercent(l.state.bri||0);ctrl+=`<div class="slider-row"><span class="slider-label">BRI</span><input type="range" min="1" max="100" value="${p}" data-bri="${lid}"><span class="slider-value">${p}%</span></div>`}
   if(on&&(type==='ct'||type==='color')){const ct=l.state.ct||300,caps=lcaps(l).ct;ctrl+=`<div class="slider-row"><span class="slider-label">CT</span><input type="range" class="ct-slider" min="${caps&&caps.min||153}" max="${caps&&caps.max||500}" value="${ct}" data-ct="${lid}"><span class="slider-value">${ctToLabel(ct)}</span></div>`}
   if(on&&type==='color'){const xy=l.state.xy||[.3127,.329],hex=xyToHex(xy[0],xy[1],l.state.bri);ctrl+=`<div class="color-row"><span class="slider-label">CLR</span><div class="color-picker-wrap"><input type="color" value="${hex}" data-color="${lid}"></div></div>`}
-  return`<div class="light-card ${on?'on':''}"><div class="light-card-header"><div class="light-card-icon"></div><span class="light-card-name">${l.name}</span><span class="light-card-type">${lightTypeLabel(type)}</span><span data-light-toggle="${lid}">${toggleHtml(on)}</span></div>${ctrl?`<div class="light-card-controls">${ctrl}</div>`:''}</div>`;
+  const off=l.state&&l.state.reachable===false;
+  return`<div class="light-card ${on?'on':''} ${off?'unreachable':''}"><div class="light-card-header"><div class="light-card-icon"></div><span class="light-card-name">${esc(l.name)}</span><span class="light-card-type">${off?'OFFLINE':lightTypeLabel(type)}</span><span data-light-toggle="${lid}">${toggleHtml(on)}</span></div>${ctrl?`<div class="light-card-controls">${ctrl}</div>`:''}</div>`;
 }
 
 function renderCustom(){
   const sw=state.customSwitches;
   document.getElementById('panelCustom').innerHTML=`<div class="custom-grid">
-    ${sw.map((s,i)=>{const on=isCustomOn(s),a=s.color||'var(--accent)';return`<div class="custom-switch ${on?'on':''}" data-custom="${i}" style="${on?`border-color:${a}40`:''}">
+    ${sw.map((s,i)=>{const on=isCustomOn(s),a=safeColor(s.color);return`<div class="custom-switch ${on?'on':''}" data-custom="${i}" style="${on?`border-color:${a}40`:''}">
       <div style="position:absolute;top:0;right:0;bottom:0;left:0;background:radial-gradient(ellipse at center,${a}15,transparent 70%);opacity:${on?1:0};transition:opacity .3s"></div>
       <button class="edit-btn" data-custom-edit="${i}"><svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
-      <span class="custom-switch-name">${s.name}</span><span class="custom-switch-status" style="color:${on?a:''}">${on?'ON':'OFF'}</span></div>`}).join('')}
+      <span class="custom-switch-name">${esc(s.name)}</span><span class="custom-switch-status" style="color:${on?a:''}">${on?'ON':'OFF'}</span></div>`}).join('')}
     <button class="add-switch-btn" id="addSwitchBtn"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>ADD</button></div>`;
 }
 
-function isCustomOn(sw){if(!(sw.targets||[]).length)return false;return sw.targets.every(t=>t.type==='light'?ls(t.id).on:t.type==='group'?gs(t.id).any_on:false)}
+/* Group state is derived from its lights, so optimistic changes show up immediately */
+function isGroupOn(id){var g=state.groups[id];return !!(g&&g.lights&&g.lights.some(function(lid){return ls(lid).on}))}
+function isCustomOn(sw){if(!(sw.targets||[]).length)return false;return sw.targets.every(t=>t.type==='light'?ls(t.id).on:t.type==='group'?isGroupOn(t.id):false)}
 async function toggleCustom(sw){var on=isCustomOn(sw);await Promise.all(sw.targets.map(function(t){return t.type==='light'?setLight(t.id,{on:!on}):setGroup(t.id,{on:!on})}))}
 function saveCustomSwitches(){localStorage.setItem('nexus_custom',JSON.stringify(state.customSwitches))}
 
 /* ═══ STATUS: WEATHER & NEWS ═══ */
+function loadLocation(){
+  try{
+    var l=JSON.parse(localStorage.getItem('nexus_location')||'null');
+    /* Older versions stored 0/0 (Gulf of Guinea) when geolocation failed */
+    if(!l||typeof l.lat!=='number'||(l.lat===0&&l.lon===0))return null;
+    return l;
+  }catch(e){return null}
+}
+function saveLocation(loc){state.location=loc;localStorage.setItem('nexus_location',JSON.stringify(loc))}
 async function getLocation(){
   if(state.location)return state.location;
   try{
-    const pos=await new Promise((res,rej)=>navigator.geolocation.getCurrentPosition(res,rej,{timeout:5000}));
-    state.location={lat:pos.coords.latitude,lon:pos.coords.longitude};
+    const pos=await new Promise((res,rej)=>navigator.geolocation.getCurrentPosition(res,rej,{timeout:8000}));
+    saveLocation({lat:pos.coords.latitude,lon:pos.coords.longitude,name:''});
+    return state.location;
   }catch(e){
-    state.location={lat:CONFIG.defaultLat,lon:CONFIG.defaultLon};
+    return null;   /* ask for a city in the status panel instead */
   }
-  localStorage.setItem('nexus_location',JSON.stringify(state.location));
-  return state.location;
+}
+async function searchLocation(q){
+  const d=await(await timedFetch('https://geocoding-api.open-meteo.com/v1/search?count=1&language=de&name='+encodeURIComponent(q),{},8000)).json();
+  const r=d&&d.results&&d.results[0];
+  if(!r)throw new Error('not found');
+  saveLocation({lat:r.latitude,lon:r.longitude,name:r.name});
 }
 
 async function fetchWeather(){
   try{
     const loc=await getLocation();
+    if(!loc){state.weather=null;renderStatus();return}
     const url=`https://api.open-meteo.com/v1/forecast?latitude=${loc.lat}&longitude=${loc.lon}&current=temperature_2m,weathercode,windspeed_10m,relative_humidity_2m&daily=weathercode,temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=4`;
-    const data=await(await fetch(url)).json();
+    const data=await(await timedFetch(url,{},10000)).json();
     state.weather=data;
   }catch(e){state.weather=null}
   renderStatus();
@@ -799,8 +902,10 @@ async function fetchWeather(){
 
 async function fetchNews(){
   try{
-    const data=await(await fetch('https://www.tagesschau.de/api2u/news/')).json();
-    state.news=(data.news||[]).slice(0,8).map(n=>({title:n.title,date:n.date}));
+    const data=await(await timedFetch('https://www.tagesschau.de/api2u/news',{},10000)).json();
+    /* Only items with a web page (videos have none); links must be plain https */
+    state.news=(data.news||[]).map(n=>({title:n.title,date:n.date,url:n.shareURL||n.detailsweb||''}))
+      .filter(n=>n.title&&/^https:\/\//.test(n.url)).slice(0,8);
   }catch(e){
     state.news=[];
   }
@@ -810,13 +915,17 @@ async function fetchNews(){
 function renderStatus(){
   const w=state.weather;
   const loc=state.location;
+  const locForm=`<div class="weather-location"><input class="loc-input" id="locInput" type="text" placeholder="City, e.g. Dresden" autocomplete="off"><button id="locSave">SET</button></div>`;
   let weatherHtml='<div class="info-msg">Loading weather...</div>';
-  if(w&&w.current){
+  if(!loc||state.editingLocation){
+    weatherHtml=locForm+(loc?'':'<div class="info-msg">Location unknown &mdash; enter a city.</div>');
+  }else if(w&&w.current){
     const cur=w.current;
     const daily=w.daily;
     weatherHtml=`
       <div class="weather-location">
-        <span class="weather-location-text">LAT ${loc&&loc.lat?loc.lat.toFixed(2):'--'} / LON ${loc&&loc.lon?loc.lon.toFixed(2):'--'}</span>
+        <span class="weather-location-text">${loc.name?esc(loc.name).toUpperCase():'LAT '+loc.lat.toFixed(2)+' / LON '+loc.lon.toFixed(2)}</span>
+        <button id="locEdit">CHANGE</button>
       </div>
       <div class="weather-current">
         <div class="weather-temp">${Math.round(cur.temperature_2m)}&deg;</div>
@@ -840,7 +949,7 @@ function renderStatus(){
     newsHtml=state.news.map(n=>{
       const t=n.date?new Date(n.date):null;
       const ts=t?String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0'):'';
-      return`<div class="news-item"><div class="news-item-title">${n.title}</div><div class="news-item-time">${ts}</div></div>`;
+      return`<a class="news-item" href="${esc(n.url)}" target="_blank" rel="noopener noreferrer"><div class="news-item-title">${esc(n.title)}</div><div class="news-item-time">${ts}</div></a>`;
     }).join('');
   }
 
@@ -982,16 +1091,16 @@ function openSwitchEditor(idx){
   const isEdit=idx!==undefined;
   const sw=isEdit?{...state.customSwitches[idx]}:{name:'',targets:[],color:SWATCH_COLORS[0]};
   const sel=new Set((sw.targets||[]).map(t=>`${t.type}:${t.id}`));
-  const rooms=getRooms(),lights=Object.entries(state.lights).sort((a,b)=>a[1].name.localeCompare(b[1].name));
+  const rooms=getRooms(),lights=Object.entries(state.lights).sort((a,b)=>String(a[1].name).localeCompare(String(b[1].name)));
   openModal(`
     <div class="modal-title">${isEdit?'EDIT':'NEW'} SWITCH</div>
-    <div class="modal-field"><label>Name</label><input type="text" id="swName" value="${sw.name}" placeholder="My Switch" autocomplete="off"></div>
+    <div class="modal-field"><label>Name</label><input type="text" id="swName" value="${esc(sw.name)}" placeholder="My Switch" autocomplete="off"></div>
     <div class="modal-field"><label>Accent Color</label><div class="color-swatches">${SWATCH_COLORS.map(c=>`<div class="color-swatch ${c===sw.color?'selected':''}" data-swatch="${c}" style="background:${c}"></div>`).join('')}</div></div>
     <div class="modal-field"><label>Targets</label><div class="target-list">
       <div class="target-section">Rooms</div>
-      ${rooms.map(([gid,g])=>`<div class="target-item ${sel.has('group:'+gid)?'selected':''}" data-target="group:${gid}"><div class="target-check"></div><span class="target-item-name">${g.name}</span><span class="target-item-sub">${g.lights.length} lights</span></div>`).join('')}
+      ${rooms.map(([gid,g])=>`<div class="target-item ${sel.has('group:'+gid)?'selected':''}" data-target="group:${gid}"><div class="target-check"></div><span class="target-item-name">${esc(g.name)}</span><span class="target-item-sub">${g.lights.length} lights</span></div>`).join('')}
       <div class="target-section">Lights</div>
-      ${lights.map(([lid,l])=>`<div class="target-item ${sel.has('light:'+lid)?'selected':''}" data-target="light:${lid}"><div class="target-check"></div><span class="target-item-name">${l.name}</span><span class="target-item-sub">${lightTypeLabel(lightType(l))}</span></div>`).join('')}
+      ${lights.map(([lid,l])=>`<div class="target-item ${sel.has('light:'+lid)?'selected':''}" data-target="light:${lid}"><div class="target-check"></div><span class="target-item-name">${esc(l.name)}</span><span class="target-item-sub">${lightTypeLabel(lightType(l))}</span></div>`).join('')}
     </div></div>
     <div class="modal-actions">${isEdit?'<button class="btn-delete" id="modalDelete">DEL</button>':''}<button class="btn-cancel" id="modalCancel">CANCEL</button><button class="btn-save" id="modalSave">SAVE</button></div>`);
   document.querySelectorAll('.color-swatch').forEach(el=>el.addEventListener('click',()=>{document.querySelectorAll('.color-swatch').forEach(s=>s.classList.remove('selected'));el.classList.add('selected')}));
@@ -1020,6 +1129,20 @@ document.querySelectorAll('nav button').forEach(btn=>{
 });
 document.getElementById('modalOverlay').addEventListener('click',e=>{if(e.target===e.currentTarget)closeModal()});
 
+async function submitLocation(){
+  const inp=document.getElementById('locInput');
+  const q=inp&&inp.value.trim();
+  if(!q)return;
+  inp.disabled=true;
+  try{await searchLocation(q);state.editingLocation=false;state.weather=null;renderStatus();fetchWeather()}
+  catch(e){inp.disabled=false;inp.value='';inp.placeholder='Not found \u2014 try another city'}
+}
+document.getElementById('panelStatus').addEventListener('click',e=>{
+  if(e.target.closest('#locEdit')){state.editingLocation=true;renderStatus();const i=document.getElementById('locInput');if(i)i.focus();return}
+  if(e.target.closest('#locSave'))submitLocation();
+});
+document.getElementById('panelStatus').addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.id==='locInput')submitLocation()});
+
 document.querySelector('main').addEventListener('click',e=>{
   const t=e.target;
   const pill=t.closest('[data-dash-light]');
@@ -1040,9 +1163,10 @@ document.querySelector('main').addEventListener('click',e=>{
 
 document.querySelector('main').addEventListener('input',e=>{
   const t=e.target;
-  if(t.dataset.bri){const p=parseInt(t.value);t.nextElementSibling.textContent=p+'%';debouncedSet('bri-'+t.dataset.bri,()=>setLight(t.dataset.bri,{bri:percentToBri(p)}),150);return}
-  if(t.dataset.ct){const ct=parseInt(t.value);t.nextElementSibling.textContent=ctToLabel(ct);debouncedSet('ct-'+t.dataset.ct,()=>setLight(t.dataset.ct,{ct}),150);return}
-  if(t.dataset.color){const[x,y]=hexToXy(t.value);debouncedSet('color-'+t.dataset.color,()=>setLight(t.dataset.color,{xy:[x,y]}),150);return}
+  /* Patch the local state right away so a redraw after release shows the new value */
+  if(t.dataset.bri){const id=t.dataset.bri,p=parseInt(t.value),body={bri:Math.max(1,percentToBri(p))};t.nextElementSibling.textContent=p+'%';patchLight(id,body);lockPoll();debouncedSet('bri-'+id,()=>apiPut('/lights/'+id+'/state',body),150);return}
+  if(t.dataset.ct){const id=t.dataset.ct,body={ct:parseInt(t.value)};t.nextElementSibling.textContent=ctToLabel(body.ct);patchLight(id,body);lockPoll();debouncedSet('ct-'+id,()=>apiPut('/lights/'+id+'/state',body),150);return}
+  if(t.dataset.color){const id=t.dataset.color,body={xy:hexToXy(t.value)};patchLight(id,body);lockPoll();debouncedSet('color-'+id,()=>apiPut('/lights/'+id+'/state',body),150);return}
 });
 document.querySelector('main').addEventListener('change',e=>{if(e.target.closest('.toggle'))e.preventDefault()});
 
@@ -1057,7 +1181,7 @@ document.addEventListener('touchcancel',endInteraction,{passive:true});
 /* ═══ INIT ═══ */
 async function init(){
   await fetchState();
-  setInterval(fetchState,CONFIG.pollInterval);
+  schedulePoll();
   initNotes();
   fetchWeather();fetchNews();
   setInterval(fetchWeather,CONFIG.weatherInterval);

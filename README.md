@@ -28,8 +28,10 @@ A single self-contained HTML file. No build step, no dependencies, no server nee
 **Setup:**
 
 1. Open `index.html` in Chrome/Chromium on the tablet.
-2. The built-in setup wizard will discover your bridge and walk you through pairing — just press the bridge button when prompted.
+2. The setup wizard asks for the bridge IP (browsers cannot use the Hue cloud discovery because of CORS; find the IP in your router or the Hue app), checks that a bridge answers there, then waits up to 60 seconds for you to press the bridge button.
 3. Credentials are saved in the browser's localStorage. Use the gear icon in the header to reset.
+
+The bridge is only reachable in the home network. When it does not answer, the app shows a notice instead of stale switches and retries every 15 seconds. Polling pauses while the page is hidden. If the browser cannot determine the location, the Status panel asks for a city for the weather.
 
 **Compatibility:** tested on old Android tablets running Chrome 80+. No optional chaining or modern CSS that would break on older browsers.
 
@@ -43,14 +45,15 @@ A system tray popup with room cards, per-light toggles, brightness sliders, and 
 
 **Install:**
 ```bash
-cp -r kde-plasmoid ~/.local/share/plasma/plasmoids/io.github.jo-tud.hue-dashboard
+kpackagetool6 -t Plasma/Applet -i kde-plasmoid
 # or to update an existing install:
-# rm -rf ~/.local/share/plasma/plasmoids/io.github.jo-tud.hue-dashboard && cp -r kde-plasmoid ~/.local/share/plasma/plasmoids/io.github.jo-tud.hue-dashboard
-plasmashell --replace &
+# kpackagetool6 -t Plasma/Applet -u kde-plasmoid && systemctl --user restart plasma-plasmashell
 ```
 Then right-click the panel → *Add Widgets* → search "Hue Dashboard".
 
-On first launch, the widget walks you through bridge discovery and pairing. Credentials are stored via Qt Settings and persist across restarts.
+On first launch, the widget walks you through bridge discovery and pairing. Bridge IP and API key are stored in the widget configuration; right-click → *Configure…* to change the IP or forget the pairing.
+
+The bridge is only reachable in the home network. Elsewhere the widget dims its icon, sets itself passive (hidden in the overflow when placed in the system tray) and only checks every two minutes whether it is back home. While the popup is open it refreshes every two seconds.
 
 ---
 
